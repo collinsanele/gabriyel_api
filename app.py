@@ -220,10 +220,27 @@ def scrape_chartmill():
 
 
 def scrape_barchart():
+    data = {'initialURL': 'https://www.barchart.com'}
+    r = requests.post('https://prod.sureoakdata.com/api/v1/header-checker', data=data)
+    result_data = r.json()
+    
+    main_cookie = ''
+    laravel_token = ''
+    laravel_session = ''
+    
+    for item in result_data['headers'][0]['rows']:
+        if 'XSRF-TOKEN=' in item['value']:
+            token = item['value'].split('XSRF-TOKEN=')[1].replace('%3D', '=').strip().split(' ')[0].replace(';', '').strip()
+            
+        if 'laravel_token=' in item['value']:
+            laravel_token = item['value'].split(';')[0]
+            
+        if 'laravel_session=' in item['value']:
+            laravel_session =item['value'].split(';')[0]
+            
+    main_cookie = laravel_token + '; ' + 'XSRF-TOKEN=' + token.replace('=', '%3D') + '; ' + laravel_session
+    
     url = 'https://www.barchart.com/proxies/core-api/v1/options/get?fields=symbol%2CbaseSymbol%2CbaseLastPrice%2CbaseSymbolType%2CsymbolType%2CstrikePrice%2CexpirationDate%2CdaysToExpiration%2CbidPrice%2Cmidpoint%2CaskPrice%2ClastPrice%2Cvolume%2CopenInterest%2CvolumeOpenInterestRatio%2Cvolatility%2CtradeTime%2CsymbolCode&meta=field.shortName%2Cfield.type%2Cfield.description&orderBy=volumeOpenInterestRatio&orderDir=desc&baseSymbolTypes=stock&between(volumeOpenInterestRatio%2C1.24%2C)=&between(lastPrice%2C.10%2C)=&between(tradeTime%2C2021-02-17%2C2021-02-18)=&between(volume%2C500%2C)=&between(openInterest%2C100%2C)=&in(exchange%2C(AMEX%2CNASDAQ%2CNYSE))=&page=1&limit=100&raw=1'
-    r = requests.get(url)
-    token = r.headers['X-Amz-Cf-Id']
-    print(token)
     result_arr = []
     headers = {
     'authority': 'www.barchart.com',
@@ -234,7 +251,7 @@ def scrape_barchart():
     'accept-encoding': 'gzip, deflate, br',
     'accept-language': 'en-US,en;q=0.9',
     'cache-control': 'no-cache',
-    'cookie': 'laravel_token=eyJpdiI6InBIeDJXUk1SZEFxbmxGRWJmQVRhV3c9PSIsInZhbHVlIjoiK1FzbitTaDVtcGQ2MmNkcTFTVXc3NEQ1WTRDbkQvZERIMUdEeU9HMkU4aHk3L0d0Qm1yN2p1U0Vjd0txNkk1WEdDL0FtSkRVdkp0Q1Joa05RSzlDOXdMUlgxQWJBcE1uQW5oU2FTc1FzbCtVSHlsN0x3SnhIZ2wzTlVpNHoraWora1pxR2ZnMnQxdWJWd3F3aDVtT3hsMisyb3QvWWJwVUd2NExYeWVETTltOGdsa2hibWJocjhLZVROQmhnVTJjZVJnMnpmZmlla3BJUnRSY3kveXpsTWwxZ2YyV0tPL1Q2cUkxSHY2aEtpV1VLTU1uRHVxUmZOT1AzVk9lZW4xTCIsIm1hYyI6Ijg3OWVlNjBmMjc0NGFkZWUyMTBjYzc3MThlY2E0OTMyMjc1OTJkYjA5MzgxMTUyMjVmYTI1NGQxOWU3MDcyMDAifQ%3D%3D; XSRF-TOKEN=eyJpdiI6Imp1V1NoNHNHbVRuUWp3SGRmVUR0dkE9PSIsInZhbHVlIjoiU1VIQ0JCT3B3RDBhM0MxeG5QeGQwRHIrUGQ2am1UNkQyWTluS1RLMmdYWmdzeXFSRzc2Q3ZRUU4zZnVteDNGdCIsIm1hYyI6ImFiOWRhZGE0ZTIxZTg5MDdhZTA4YmU2MmE4NGEzOTc5ZmMxNDY3NzEyNDE3MGFhMzVmODUzN2I0ODk2MTU5NDQifQ%3D%3D; laravel_session=eyJpdiI6IkZ5Q2FmekpiV05xRk40UkZIR0g4Qnc9PSIsInZhbHVlIjoiZWwrSUZKbTFOdHdhelBLU1NaUWdaV1hjTjZYdWtJdzJSK0t1MGFNU2c5OGlZVm14YW1hY2U4WWh5Z1h2czhZUyIsIm1hYyI6ImJmOWQ4ZmYwMzNhMGI1MmNmYWJjNDJiNDQyZmYwZTNjNmJmNGY5ZTFjZGRmMjg2ZDc2YTFlNzJmYWE2ZjYzOWIifQ%3D%3D; market=eyJpdiI6ImpTdGNVb2Y5K1hTa2EzRTcxeFoyNVE9PSIsInZhbHVlIjoiZUVDWS9Uc251YWQ2WGZ0dU5BSmthdz09IiwibWFjIjoiNTc0NDJjM2E2NTRiMGMwNDkzZGU5NzBiZDFlMDA0OTllYWQ4MWRiMzlmYzU4ZjBlY2IxZWJkOGM2NDU5NDc5NCJ9; _gcl_au=1.1.726442713.1613589955; _ga=GA1.2.1408868009.1613589957; _gid=GA1.2.787419582.1613589957; _gat_UA-2009749-51=1; bcFreeUserPageView=0; futures-02242021PageView=1; futures-02242021WebinarClosed=true',
+    'cookie': main_cookie,
     'pragma': 'no-cache',
     'referer': 'https://www.barchart.com/options/unusual-activity/stocks',
     'sec-ch-ua': '"Chromium";v="89", ";Not\"A\\Brand";v="99"',
@@ -243,10 +260,11 @@ def scrape_barchart():
     'sec-fetch-mode': 'cors',
     'sec-fetch-site': 'same-origin',
     'user-agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4326.0 Safari/537.36',
-    #'x-xsrf-token': 'eyJpdiI6Imp1V1NoNHNHbVRuUWp3SGRmVUR0dkE9PSIsInZhbHVlIjoiU1VIQ0JCT3B3RDBhM0MxeG5QeGQwRHIrUGQ2am1UNkQyWTluS1RLMmdYWmdzeXFSRzc2Q3ZRUU4zZnVteDNGdCIsIm1hYyI6ImFiOWRhZGE0ZTIxZTg5MDdhZTA4YmU2MmE4NGEzOTc5ZmMxNDY3NzEyNDE3MGFhMzVmODUzN2I0ODk2MTU5NDQifQ=='
     'x-xsrf-token': token
     }
+    
     r = requests.get(url, headers=headers)
+    
     data = r.json()['data']
     
     for item in data:
@@ -282,7 +300,7 @@ def scrape_barchart():
         obj['Last_Trade'] = last_trade
         
         result_arr.append(obj)
-        
+    
     return result_arr
         
         
@@ -390,6 +408,12 @@ def stockbeep_downtrend():
 def mba():
     result = scrape_stockmarket_mba()
     return jsonify(result)
+    
+   
+@app.route('/scrape_barchart')
+def scrape_barchart_():
+    result = scrape_barchart()
+    return jsonify(result)
 
 
      
@@ -420,21 +444,7 @@ if __name__ == '__main__':
         
         
         
-        
-
-
-
-
-
-
-
   
-
-#scrape_stockbeep(mode='unusual-vol')
-#scrape_marketbeat()
-#scrape_barchart()
-#print(scrape_stockmarket_mba())
-
 
 
 
